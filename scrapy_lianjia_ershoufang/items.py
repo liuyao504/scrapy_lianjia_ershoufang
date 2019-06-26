@@ -10,6 +10,7 @@ import scrapy
 
 class ScrapyLianjiaErshoufangItem(scrapy.Item):
     # define the fields for your item here like:
+    id = scrapy.Field()
     title = scrapy.Field()
     room = scrapy.Field()
     area = scrapy.Field()
@@ -25,4 +26,5 @@ class ScrapyLianjiaErshoufangItem(scrapy.Item):
     total_price = scrapy.Field()
     unit_price = scrapy.Field()
     unit = scrapy.Field()
+    crawl_time = scrapy.Field()
 

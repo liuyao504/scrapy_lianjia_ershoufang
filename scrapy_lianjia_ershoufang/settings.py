@@ -67,7 +67,8 @@ SPIDER_MIDDLEWARES = {
 # Configure item pipelines
 # See https://doc.scrapy.org/en/latest/topics/item-pipeline.html
 ITEM_PIPELINES = {
-   'scrapy_lianjia_ershoufang.pipelines.ScrapyLianjiaErshoufangPipeline': 300,
+   'scrapy_lianjia_ershoufang.pipelines.DuplicatesPipeline': 299,
+   'scrapy_lianjia_ershoufang.pipelines.CSVPipeline': 300,
 }
 
 # Enable and configure the AutoThrottle extension (disabled by default)

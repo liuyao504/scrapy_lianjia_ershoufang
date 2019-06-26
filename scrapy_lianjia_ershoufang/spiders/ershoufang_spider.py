@@ -1,5 +1,7 @@
 import scrapy
 from scrapy.http.response.text import TextResponse
+from datetime import datetime
+import hashlib
 
 from scrapy_lianjia_ershoufang.items import ScrapyLianjiaErshoufangItem
 
@@ -7,9 +9,14 @@ from scrapy_lianjia_ershoufang.items import ScrapyLianjiaErshoufangItem
 class ErshoufangSpider(scrapy.Spider):
     name = 'ErshoufangSpider'
 
+    def __init__(self, name=None, **kwargs):
+        super().__init__(name=None, **kwargs)
+        if getattr(self, 'city', None) is None:
+            setattr(self, 'city', 'sz')
+        self.allowed_domains = ['%s.lianjia.com' % getattr(self, 'city')]
+
     def start_requests(self):
-        city = getattr(self, 'city', 'sz')
-        self.allowed_domains = ['%s.lianjia.com' % city]
+        city = getattr(self, 'city')
         urls = ['https://%s.lianjia.com/ershoufang/pg%d/' % (city, i)
                 for i in range(1, 101)]
         for url in urls:
@@ -18,22 +25,8 @@ class ErshoufangSpider(scrapy.Spider):
     def parse(self, response: TextResponse):
         items = response.css('ul.sellListContent li')
         for li in items:
-            '''
-            title = scrapy.Field()
-            room = scrapy.Field()
-            area = scrapy.Field()
-            orientation = scrapy.Field()
-            elevator = scrapy.Field()
-            location = scrapy.Field()
-            flood = scrapy.Field()
-            follow_number = scrapy.Field()
-            look_number = scrapy.Field()
-            pub_duration = scrapy.Field()
-            total_price = scrapy.Field()
-            unit_price = scrapy.Field()
-            '''
             item = ScrapyLianjiaErshoufangItem()
-            item['title'] = li.css('div.title a::text').get()
+            item['title'] = li.css('div.title a::text').get().replace('：', '').replace("\n", '')
             house_infos = li.css('div.address .houseInfo::text').re(
                 r'\|\s+(.*)\s+\|\s+(.*)平米\s+\|\s+(.*)\s+\|\s+(.*)\s+\|\s+(.*)')
             item['room'] = house_infos[0]
@@ -51,4 +44,14 @@ class ErshoufangSpider(scrapy.Spider):
             item['total_price'] = li.css('div.priceInfo div.totalPrice span::text').get()
             item['unit_price'] = li.css('div.priceInfo .unitPrice span::text').get()
             item['unit'] = li.css('div.totalPrice::text').get()
+            item['crawl_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            item['id'] = self.genearteMD5(''.join((str(item['title']), str(item['room']), str(item['area']),
+                                                   str(item['orientation']), str(item['elevator']), str(item['xiaoqu']),
+                                                   str(item['flood']), str(item['location']))))
             yield item
+
+    def genearteMD5(self, text):
+        # 创建md5对象
+        hl = hashlib.md5()
+        hl.update(text.encode(encoding='utf-8'))
+        return hl.hexdigest()
