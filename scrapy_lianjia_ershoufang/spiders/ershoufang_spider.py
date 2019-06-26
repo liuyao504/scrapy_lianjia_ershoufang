@@ -26,7 +26,7 @@ class ErshoufangSpider(scrapy.Spider):
         items = response.css('ul.sellListContent li')
         for li in items:
             item = ScrapyLianjiaErshoufangItem()
-            item['title'] = li.css('div.title a::text').get().replace('：', '').replace("\n", '')
+            item['title'] = li.css('div.title a::text').get().replace('：', '').replace(',', ' ').replace("\n", '')
             house_infos = li.css('div.address .houseInfo::text').re(
                 r'\|\s+(.*)\s+\|\s+(.*)平米\s+\|\s+(.*)\s+\|\s+(.*)\s+\|\s+(.*)')
             item['room'] = house_infos[0]
@@ -42,12 +42,14 @@ class ErshoufangSpider(scrapy.Spider):
             item['look_number'] = follow_infos[1]
             item['pub_duration'] = follow_infos[2]
             item['total_price'] = li.css('div.priceInfo div.totalPrice span::text').get()
-            item['unit_price'] = li.css('div.priceInfo .unitPrice span::text').get()
-            item['unit'] = li.css('div.totalPrice::text').get()
+            unit_price = li.css('div.priceInfo .unitPrice span::text').re(r'单价(.*)元/平米')
+            item['unit_price'] = unit_price[0]
+            item['total_unit'] = li.css('div.totalPrice::text').get()
             item['crawl_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            item['id'] = self.genearteMD5(''.join((str(item['title']), str(item['room']), str(item['area']),
-                                                   str(item['orientation']), str(item['elevator']), str(item['xiaoqu']),
-                                                   str(item['flood']), str(item['location']))))
+            item['house_id'] = self.genearteMD5(''.join((str(item['title']), str(item['room']), str(item['area']),
+                                                         str(item['orientation']), str(item['elevator']),
+                                                         str(item['xiaoqu']),
+                                                         str(item['flood']), str(item['location']))))
             yield item
 
     def genearteMD5(self, text):
